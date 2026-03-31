@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>MD Browser</title>
+<link rel="stylesheet" href="/static/styles.css?v=20260329d">
+<style>
+.tb h1{letter-spacing:.08em}
+.tb .info{font-variant-numeric:tabular-nums}
+.recent[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="tb">
+  <h1>MD Browser</h1>
+  <button id="rfBtn">刷新</button>
+  <button id="bkBtn">重新选择</button>
+  <span class="info" id="timing"></span>
+</div>
+
+<div class="main">
+  <div class="sb" id="sb"></div>
+  <div class="resizer" id="rz1"></div>
+
+  <div class="mid">
+    <div class="mh">
+      <div class="mh-meta">
+        <div class="crumbs" id="crumbs"></div>
+        <span class="mh-stats" id="mhInfo">读取中...</span>
+      </div>
+      <input id="search" placeholder="过滤当前目录 (按 /)">
+    </div>
+    <div class="ml" id="ml"></div>
+    <div class="pgr" id="pgr"></div>
+  </div>
+
+  <div class="resizer" id="rz2"></div>
+
+  <div class="right">
+    <div class="tabs-wrap">
+      <div class="tabs" id="tabs"></div>
+      <button class="tabs-close-all" id="tabsCloseAll" title="关闭全部标签">全部关闭</button>
+    </div>
+    <div class="panes" id="panes">
+      <div class="pane act" id="emptyPane">
+        <div class="pane-empty">从左侧列表打开文档</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="recent" id="recentDocs" hidden></div>
+</div>
+<script src="/static/modules/tree.js?v=20260329c"></script>
+<script src="/static/modules/list.js?v=20260329c"></script>
+<script src="/static/modules/tabs.js?v=20260329c"></script>
+<script src="/static/modules/resize.js?v=20260328g"></script>
+<script src="/static/modules/refresh.js?v=20260329c"></script>
+<script src="/static/modules/search.js?v=20260329c"></script>
+<script src="/static/modules/recent.js?v=20260328g"></script>
+<script src="/static/modules/docs.js?v=20260329a"></script>
+<script src="/static/app.js?v=20260329c"></script>
+</body>
+</html>

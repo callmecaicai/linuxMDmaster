@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>选择浏览目录</title>
+<link rel="stylesheet" href="/static/styles.css?v=20260329d">
+<style>
+body{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  margin:0;padding:24px;
+  background:linear-gradient(180deg,#f7f4ed 0%,#efe8dd 100%);
+}
+.box{
+  width:min(620px,92vw);padding:28px;border-radius:16px;
+  background:#fffdf8;
+  border:1px solid #ddd0bb;box-shadow:0 20px 50px rgba(111,87,48,.08);position:relative;overflow:hidden
+}
+.box h1{
+  font-family:'IBM Plex Sans SC',sans-serif;font-size:1.14rem;font-weight:700;letter-spacing:.04em;color:var(--text);margin:0 0 8px
+}
+.sub{font-size:.84rem;color:var(--muted);margin:0 0 12px;line-height:1.65}
+.hint{font-size:.76rem;color:#776449;margin:0 0 16px;line-height:1.6}
+.acts{display:flex;gap:8px;margin-bottom:12px}
+.acts button{
+  padding:8px 14px;font-size:.76rem;border:1px solid #d7c6a8;border-radius:8px;cursor:pointer;
+  background:#f5efe3;color:var(--text);transition:transform .14s,box-shadow .14s,border-color .14s,color .14s;letter-spacing:.04em
+}
+.acts button:hover{transform:translateY(-1px);box-shadow:var(--shadow-soft);border-color:#c5a877;background:#efe4d0}
+.list{max-height:460px;overflow-y:auto;border:1px solid #d7c9b2;border-radius:12px;margin-bottom:16px;background:#fcfaf6;box-shadow:inset 0 1px 0 rgba(255,255,255,.65)}
+.grp{padding:10px 14px;font-size:.72rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#70542a;background:#f1e8d8;border-bottom:1px solid #dfd0b7;position:sticky;top:0;z-index:1}
+.item{padding:12px 14px;display:flex;gap:10px;align-items:center;cursor:pointer;font-size:.92rem;font-weight:600;color:var(--text);border-bottom:1px solid rgba(190,155,99,.18);transition:background .14s,color .14s,transform .14s}
+.item:last-child{border-bottom:none}
+.item:hover{background:rgba(239,207,146,.16);color:var(--text);transform:translateX(2px)}
+.item.optional{opacity:.78}
+.item input{width:16px;height:16px;cursor:pointer;accent-color:var(--cyan)}
+.item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{margin-left:auto;padding:2px 8px;border-radius:999px;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;border:1px solid rgba(190,155,99,.3);background:rgba(255,255,255,.6)}
+.tag.rec{color:#8a5a20}
+.tag.opt{color:var(--muted)}
+.btm{display:flex;justify-content:space-between;align-items:center}
+.cnt{font-size:.78rem;color:var(--muted);letter-spacing:.06em}
+.btn{
+  background:linear-gradient(135deg,#efcf92,#dca65c);color:#130d07;border:none;padding:11px 26px;border-radius:999px;cursor:pointer;font-size:.88rem;font-weight:700;
+  box-shadow:var(--shadow-soft);transition:transform .14s,box-shadow .14s,opacity .14s;letter-spacing:.04em
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{background:#d7c5a2;box-shadow:none;color:#8d7b60;cursor:not-allowed}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>选择要浏览的目录</h1>
+    <p class="sub" id="rootLabel"></p>
+    <p class="hint">默认会隐藏常见系统和缓存目录，方便只勾选要浏览的文件夹。</p>
+    <div class="acts">
+      <button id="selAll">全选</button>
+      <button id="selNone">全不选</button>
+    </div>
+    <div class="list" id="list"><p class="list-empty">读取子目录中...</p></div>
+    <div class="btm">
+      <span class="cnt" id="cnt">已选 0 个</span>
+      <button class="btn" id="btn" disabled>进入浏览</button>
+    </div>
+  </div>
+<script>
+function escapeHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+var root = new URLSearchParams(location.search).get('root') || '.';
+document.getElementById('rootLabel').textContent = '当前目录：' + root;
+
+fetch('/subdirs?root=' + encodeURIComponent(root))
+  .then(function(r){return r.json()})
+  .then(function(groups){
+    var h = '';
+    var hasItems = false;
+    for (var g = 0; g < groups.length; g++) {
+      var grp = groups[g];
+      if (!grp.dirs || !grp.dirs.length) continue;
+      h += '<div class="grp">' + escapeHtml(grp.label) + '</div>';
+      for (var i = 0; i < grp.dirs.length; i++) {
+        var dir = grp.dirs[i];
+        var checked = dir.recommended && grp.label === root;
+        hasItems = true;
+        h += '<label class="item ' + (checked ? '' : 'optional') + '"><input type="checkbox" ' + (checked ? 'checked ' : '') + 'data-path="' +
+          escapeHtml(dir.path) +
+          '"><span>' + escapeHtml(dir.name) + '</span><em class="tag ' + (checked ? 'rec">推荐' : 'opt">可选') + '</em></label>';
+      }
+    }
+    document.getElementById('list').innerHTML = hasItems ? h : '<p class="list-empty">当前没有可浏览的子目录</p>';
+    upd();
+  })
+  .catch(function(){
+    document.getElementById('list').innerHTML = '<p class="list-empty">目录读取失败，请刷新重试</p>';
+  });
+
+function upd() {
+  var n = document.querySelectorAll('#list input:checked').length;
+  document.getElementById('cnt').textContent = '已选 ' + n + ' 个';
+  document.getElementById('btn').disabled = (n === 0);
+}
+
+document.getElementById('list').addEventListener('change', upd);
+
+document.getElementById('selAll').addEventListener('click', function(){
+  var boxes = document.querySelectorAll('#list input[type=checkbox]');
+  for (var i = 0; i < boxes.length; i++) boxes[i].checked = true;
+  upd();
+});
+document.getElementById('selNone').addEventListener('click', function(){
+  var boxes = document.querySelectorAll('#list input[type=checkbox]');
+  for (var i = 0; i < boxes.length; i++) boxes[i].checked = false;
+  upd();
+});
+
+document.getElementById('btn').addEventListener('click', function(){
+  var boxes = document.querySelectorAll('#list input:checked');
+  var sel = [];
+  for (var i = 0; i < boxes.length; i++) sel.push(boxes[i].dataset.path);
+  sessionStorage.setItem('md_dirs', JSON.stringify(sel));
+  location.href = '/main?root=' + encodeURIComponent(root);
+});
+</script>
+</body>
+</html>
